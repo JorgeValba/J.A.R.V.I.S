@@ -16,20 +16,9 @@ def simulacion(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "CARPETA_SALIDAS", str(tmp_path))
 
 
-def test_formula_posicion_rango_52_semanas():
-    ind = agentes.calcular_indicadores({"precio": "250.5", "max_52s": "300", "min_52s": "200", "beta": "0.7"})
-    assert ind["posicion_rango_52s_pct"] == 50.5          # (250.5-200)/(300-200)*100
-    assert ind["semaforo_beta"].startswith("🟢")
-
-
-@pytest.mark.parametrize("beta, color", [(0.5, "🟢"), (0.8, "🟡"), (1.2, "🟡"), (1.3, "🔴"), (None, "⚪")])
-def test_semaforo_beta(beta, color):
-    assert agentes.calcular_indicadores({"beta": beta})["semaforo_beta"].startswith(color)
-
-
 def test_datos_faltantes_no_rompen_el_calculo():
-    ind = agentes.calcular_indicadores({"precio": None, "max_52s": "100", "min_52s": "100"})
-    assert ind["posicion_rango_52s_pct"] is None
+    ind=agentes.calcular_indicadores({"sesiones":[]})
+    assert ind["decision_tecnica"]=="INFORMACION_INSUFICIENTE"
 
 
 def test_extraer_json_con_texto_alrededor():
@@ -71,26 +60,21 @@ def test_agentes_reales_encadenan_con_openai_simulado(monkeypatch):
     """Imita las respuestas de OpenAI para revisar el camino 'real' sin gastar llaves."""
     monkeypatch.setattr(config, "MODO_SIMULACION", False)
 
-    def openai_falso(system, mensaje, usar_mcp=False, max_tokens=900):
-        if usar_mcp:
-            return ('{"ticker":"IBM","fecha_dato":"2026-10-16","cap_mercado_usd":null,"nombre":"IBM","sector":"Tech","precio":"250.5","cambio_pct":"-0.8%",'
-                    '"pe_ratio":"40.1","beta":"0.7","max_52s":"300","min_52s":"200"}', ["GLOBAL_QUOTE"])
+    def openai_falso(system, mensaje, max_tokens=320):
         if "Analista" in system:
-            datos = json.loads(mensaje)
-            assert datos["indicadores"]["posicion_rango_52s_pct"] == 50.5   # recibió la entrega 1
-            return '{"lectura_precio":"a","lectura_riesgo":"b","lectura_valuacion":"c","pregunta_para_investigar":"d"}', []
-        assert json.loads(mensaje)["lectura"]["lectura_precio"] == "a"       # recibió la entrega 2
-        return "IBM: nota sin descargo", []
+            datos=json.loads(mensaje)
+            assert datos["indicadores"]["decision_tecnica"]=="EVALUAR_ENTRADA"
+            return '{"lectura_precio":"a","lectura_riesgo":"b","lectura_decision":"c","pregunta_para_investigar":"d"}', []
+        assert json.loads(mensaje)["lectura"]["lectura_precio"]=="a"
+        return "IBM: lectura técnica breve", []
 
-    monkeypatch.setattr(agentes, "obtener_ficha", lambda *args: {
-        "ticker":"IBM", "nombre":"IBM", "sector":"Tech", "precio":250.5,
-        "cambio_pct":-0.8,"fecha_dato":"2026-10-16","pe_ratio":40.1,"beta":0.7,
-        "max_52s":300,"min_52s":200,"cap_mercado_usd":None,"moneda":"USD",
-        "fuente":"Alpha Vantage API oficial","estado_datos":"COMPLETOS","consultas":[]})
+    ficha=agentes.ficha_demo("IBM","test")
+    ficha["fuente"]="Alpha Vantage API gratuita"
+    monkeypatch.setattr(agentes,"obtener_ficha",lambda *args:ficha)
     monkeypatch.setattr(agentes, "llamar_openai", openai_falso)
     r = pl.pipeline("IBM", avisar=lambda t: None)
     assert r["herramientas_mcp"] == []
-    assert r["entrega_1_ficha"]["fuente"] == "Alpha Vantage API oficial"
+    assert r["entrega_1_ficha"]["fuente"] == "Alpha Vantage API gratuita"
     assert r["entrega_3_nota"].endswith(agentes.DESCARGO)                   # el descargo se garantiza
 
 

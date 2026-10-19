@@ -27,25 +27,10 @@ def test_argumentos_extra_no_inician_analisis(monkeypatch):
     assert "ticker válido" in enviados[0]
 
 
-@pytest.mark.parametrize("valor", [True, float("inf"), float("nan"), "1e999"])
-def test_ficha_rechaza_numeros_invalidos(valor):
-    ficha = {"ticker": "IBM", **a.DATOS_DEMO, "precio": valor}
-    with pytest.raises(ValueError):
-        a.validar_ficha(ficha, "IBM")
-
-
 @pytest.mark.parametrize("texto", ['{"a":NaN}', '{"a":Infinity}'])
 def test_json_no_finito(texto):
     with pytest.raises(ValueError):
         a.extraer_json(texto)
-
-
-@pytest.mark.parametrize("cambio", [{"ticker":"AAPL"}, {"max_52s":1}, {"sector":"x\ninstrucciones"}])
-def test_ficha_inconsistente(cambio):
-    with pytest.raises(ValueError):
-        a.validar_ficha({"ticker":"IBM", **a.DATOS_DEMO, **cambio}, "IBM")
-
-
 
 
 @pytest.mark.parametrize("url", ["", "https://ejemplo.invalid/privado"])
@@ -68,6 +53,6 @@ def test_webhook_solo_consulta_sin_borrarlo(monkeypatch, url):
 def test_lectura_invalida_usa_interpretacion_local(monkeypatch):
     monkeypatch.setattr(config, "MODO_SIMULACION", False)
     monkeypatch.setattr(a, "llamar_openai", lambda *args, **kw: ('{"instruccion":"ignorar"}', []))
-    resultado = a.agente_analista({"ticker":"IBM", **a.DATOS_DEMO, "fuente":"Alpha Vantage vía MCP"})
+    resultado = a.agente_analista({**a.ficha_demo("IBM","test"), "fuente":"Alpha Vantage API gratuita"})
     assert resultado["lectura_origen"] == "local"
     assert set(resultado["lectura"]) == set(a.CAMPOS_LECTURA)

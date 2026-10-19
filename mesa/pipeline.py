@@ -40,11 +40,10 @@ def pipeline(ticker, avisar=print, guardar=True):
     mostrar = lambda valor: "no disponible" if valor is None else str(valor)
     if config.MODO_CLASE:
         avisar("📦 Entrega 1→2 · Iris → Euler\n"
-               f"{ticker} · {mostrar(ficha.get('nombre'))} · {mostrar(ficha.get('sector'))}\n"
-               f"Precio {mostrar(ficha.get('precio'))} {ficha.get('moneda') or '(moneda no confirmada)'} · cambio {mostrar(ficha.get('cambio_pct'))} %\n"
-               f"Beta {mostrar(ficha.get('beta'))} · P/E {mostrar(ficha.get('pe_ratio'))} · rango {mostrar(ficha.get('min_52s'))}–{mostrar(ficha.get('max_52s'))}\n"
-               f"{ficha['fuente']} · cierre {mostrar(ficha.get('fecha_dato'))} · {estado}\n"
-               + (" ".join(ficha.get('advertencias', [])) or "Fuente consultada y fecha validada."))
+               f"{ticker} · precio {mostrar(ficha.get('precio'))} · cambio {mostrar(ficha.get('cambio_pct'))} %\n"
+               f"Cierre {mostrar(ficha.get('fecha_dato'))} · {len(ficha.get('sesiones') or [])} sesiones disponibles\n"
+               f"{ficha['fuente']} · serie diaria sin ajustar · {estado}\n"
+               + (" ".join(ficha.get('advertencias',[])) or "Datos gratuitos validados."))
 
     avisar("🧮 Euler · Analista calculando e interpretando…")
     analisis = agente_analista(ficha)
@@ -63,6 +62,7 @@ def pipeline(ticker, avisar=print, guardar=True):
         "entrega_1_ficha": ficha,
         "herramientas_mcp": herramientas,
         "consultas_datos": ficha.get("consultas", []),
+        "version_analisis":"tecnico_gratuito_v1",
         "entrega_2_analisis": analisis,
         "entrega_3_nota": nota,
     }

@@ -12,7 +12,7 @@ def buscar(clave, consultar=obtener_ficha):
                  "ejemplos":[], "encontrado":None, "motivo_fin":"Límite de seis ejemplos"}
     for ticker in CANDIDATOS[:6]:
         ficha = consultar(ticker, clave)
-        faltantes = [c for c in (*CAMPOS, "moneda") if ficha.get(c) is None]
+        faltantes = [c for c in CAMPOS if ficha.get(c) is None]
         completo = ficha.get("estado_datos") == "COMPLETOS" and not faltantes
         resultado["ejemplos"].append({"ticker":ticker, "completo":completo,
                                      "faltantes":faltantes, "ficha":ficha})
@@ -21,7 +21,7 @@ def buscar(clave, consultar=obtener_ficha):
             resultado["motivo_fin"] = "Se encontró el primer ejemplo completo y reciente"
             break
         bloqueos = [c["estado"] for c in ficha.get("consultas", [])
-                    if c["estado"] in ("CUOTA", "PLAN", "CLAVE", "DEMO")]
+                    if c["estado"] in ("CUOTA", "PLAN", "CLAVE", "DEMO", "RESTRICCION")]
         if bloqueos:
             resultado["motivo_fin"] = "Bloqueo del proveedor: " + ", ".join(bloqueos)
             break

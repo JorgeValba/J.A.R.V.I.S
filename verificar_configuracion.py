@@ -1,7 +1,7 @@
 """Revisa que todo esté listo, sin mostrar el valor de ninguna llave.
 
   python verificar_configuracion.py           → revisa llaves y el token de Telegram
-  python verificar_configuracion.py --mcp     → además prueba el MCP de Alpha Vantage (gasta hasta 2 consultas)
+  python verificar_configuracion.py --datos   → prueba TIME_SERIES_DAILY compact (una consulta gratuita)
 """
 import sys
 

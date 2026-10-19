@@ -25,47 +25,28 @@ def respuesta(texto="respuesta", estado="completed", calls=None):
                        "content": [{"type": "output_text", "text": texto, "annotations": []}]}]}
 
 
-def test_sdk_serializa_responses_y_lee_texto_y_mcp(monkeypatch):
-    enviados = []
+def test_sdk_envia_texto_sin_herramientas_ni_clave_bursatil(monkeypatch):
+    enviados=[]
     def handler(request):
         enviados.append(json.loads(request.content))
-        assert request.url.path == "/v1/responses"
-        assert request.headers["authorization"] == "Bearer credencial-ficticia"
-        return httpx.Response(200, json=respuesta('{"precio":150}', calls=[{
-            "id": "mcp_prueba", "type": "mcp_call", "server_label": "alphavantage",
-            "name": "GLOBAL_QUOTE", "arguments": "{}", "output": "{}", "error": None}]))
-    client = instalar_transporte(monkeypatch, handler)
+        assert request.url.path=="/v1/responses"
+        return httpx.Response(200,json=respuesta("lectura técnica"))
+    client=instalar_transporte(monkeypatch,handler)
     try:
-        texto, tools = agentes.llamar_openai("instrucciones", "Acción: AAPL", True)
-        assert json.loads(texto) == {"precio": 150}
-        assert tools == ["GLOBAL_QUOTE"]
-        body = enviados[0]
-        assert body["instructions"] == "instrucciones"
-        assert body["input"] == [{"role": "user", "content": "Acción: AAPL"}]
-        assert body["max_output_tokens"] == 600 and body["store"] is False
-        assert body["model"] == "gpt-5.1"
-        assert body["reasoning"] == {"effort": "none"}
-        assert body["tools"][0]["server_url"].endswith("valor-ficticio%2F%2B%3F")
-        assert body["tools"][0]["require_approval"] == "never"
-        assert "mcp_servers" not in body and "messages" not in body
-    finally:
-        client.close()
+        assert agentes.llamar_openai("instrucciones","indicadores")==("lectura técnica",[])
+        body=enviados[0]
+        assert body["model"]=="gpt-5.1" and body["max_output_tokens"]==320
+        assert body["reasoning"]=={"effort":"none"} and body["store"] is False
+        assert "tools" not in body and "valor-ficticio" not in json.dumps(body)
+    finally:client.close()
 
 
-@pytest.mark.parametrize("estado,texto,calls", [
-    ("incomplete", "parcial", []), ("completed", "", []),
-    ("completed", "sin consulta", []),
-    ("completed", "fallo MCP", [{"id": "mcp_p", "type": "mcp_call", "server_label": "alphavantage",
-     "name": "GLOBAL_QUOTE", "arguments": "{}", "output": None, "error": "error remoto"}]),
-])
-def test_respuestas_incompletas_vacias_o_mcp_fallido_se_rechazan(monkeypatch, estado, texto, calls):
-    client = instalar_transporte(monkeypatch, lambda req: httpx.Response(
-        200, json=respuesta(texto, estado, calls)))
+@pytest.mark.parametrize("estado,texto",[("incomplete","parcial"),("completed","")])
+def test_rechaza_respuestas_incompletas(monkeypatch,estado,texto):
+    client=instalar_transporte(monkeypatch,lambda req:httpx.Response(200,json=respuesta(texto,estado)))
     try:
-        with pytest.raises(RuntimeError):
-            agentes.llamar_openai("instrucciones", "AAPL", usar_mcp=True)
-    finally:
-        client.close()
+        with pytest.raises(RuntimeError):agentes.llamar_openai("Euler","datos")
+    finally:client.close()
 
 
 def test_error_remoto_no_revela_credenciales(monkeypatch):

@@ -21,11 +21,11 @@ def test_cuota_no_gasta_los_seis():
     assert llamadas==["IBM"]
 
 
-def test_nunca_mas_de_seis_y_no_acepta_capitalizacion_ausente():
+def test_nunca_mas_de_seis_y_no_acepta_sesiones_ausentes():
     llamadas=[]
     def consulta(ticker, clave):
         llamadas.append(ticker)
-        return {**dict.fromkeys(CAMPOS,1),"cap_mercado_usd":None,
+        return {**dict.fromkeys(CAMPOS,1),"sesiones":None,
                 "moneda":"USD","estado_datos":"COMPLETOS","consultas":[]}
     r=buscar("ficticia",consulta)
     assert len(llamadas)==6 and r["encontrado"] is None

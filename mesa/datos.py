@@ -1,6 +1,6 @@
 """Datos verificables de Alpha Vantage para Jorge Valencia, sin extracción por IA.
 
-Solo GLOBAL_QUOTE (cierre) y OVERVIEW (fundamentales, según plan).
+Solo TIME_SERIES_DAILY con outputsize=compact, disponible en el plan gratuito.
 No registrar respuestas/URLs crudas: podrían incluir credenciales.
 """
 import math
@@ -9,14 +9,15 @@ import requests
 
 URL_API = "https://www.alphavantage.co/query"
 MAX_ANTIGUEDAD_DIAS = 7  # tolerancia explícita para fines de semana y festivos
-CAMPOS = ("nombre", "sector", "precio", "cambio_pct", "fecha_dato", "pe_ratio",
-          "beta", "max_52s", "min_52s", "cap_mercado_usd")
+CAMPOS = ("precio", "cambio_pct", "fecha_dato", "sesiones")
 ERRORES = {
     "CUOTA": "Alpha Vantage indicó límite de consultas; espera a que se restablezca tu cuota.",
     "PLAN": "Alpha Vantage exige un plan o permiso adicional para esta consulta.",
     "CLAVE": "Alpha Vantage rechazó la clave; revisa ALPHAVANTAGE_API_KEY.",
     "DEMO": "La clave demo del proveedor no sirve para validar datos actuales de tu ticker.",
     "RED": "No se pudo conectar con Alpha Vantage.",
+    "RESTRICCION": "Alpha Vantage devolvió un aviso mixto de cuota o plan; revisa los permisos de la clave. No se confirmó cuota agotada.",
+    "SERIE": "La serie diaria contiene datos inválidos o inconsistentes.",
     "RESPUESTA": "Alpha Vantage no devolvió una respuesta de datos válida.",
     "VACIO": "Alpha Vantage no devolvió datos para este ticker.",
     "ANTIGUO": "La cotización supera la tolerancia de siete días; no se utilizará como actual.",
@@ -50,9 +51,13 @@ def texto(valor, limite=160):
 
 def clasificar_aviso(mensaje):
     m = str(mensaje).lower()
-    if any(p in m for p in ("rate limit", "call frequency", "requests per day", "api limit", "quota", "25 requests", "higher api call")):
+    cuota = any(p in m for p in ("rate limit", "call frequency", "requests per day", "api limit", "quota", "25 requests", "higher api call"))
+    plan = any(p in m for p in ("premium", "subscription", "entitlement", "subscribe"))
+    if cuota and plan:
+        return "RESTRICCION"
+    if cuota:
         return "CUOTA"
-    if any(p in m for p in ("premium", "subscription", "entitlement", "subscribe")):
+    if plan:
         return "PLAN"
     if "demo" in m:
         return "DEMO"
@@ -62,11 +67,13 @@ def clasificar_aviso(mensaje):
 
 
 def consultar(funcion, ticker, clave):
+    if funcion != "TIME_SERIES_DAILY":
+        raise ValueError("Esta versión solo permite TIME_SERIES_DAILY compacto")
     if not clave or clave.strip().lower() == "demo":
         raise ErrorDatos("DEMO" if clave else "CLAVE")
     try:
         r = requests.get(URL_API, params={"function": funcion, "symbol": ticker,
-                                         "apikey": clave}, timeout=30)
+                                         "apikey": clave, "outputsize": "compact"}, timeout=30)
         if r.status_code == 429:
             raise ErrorDatos("CUOTA")
         if r.status_code in (401, 403):
@@ -85,70 +92,60 @@ def consultar(funcion, ticker, clave):
     return datos
 
 
-def validar_cotizacion(datos, ticker, hoy=None):
-    q = datos.get("Global Quote")
-    if not isinstance(q, dict) or not q:
+def validar_serie(datos, ticker, hoy=None):
+    meta = datos.get("Meta Data")
+    serie = datos.get("Time Series (Daily)")
+    if not isinstance(meta, dict) or not isinstance(serie, dict) or not serie:
         raise ErrorDatos("VACIO")
-    if str(q.get("01. symbol", "")).upper() != ticker:
+    if str(meta.get("2. Symbol", "")).upper() != ticker:
         raise ErrorDatos("TICKER")
-    precio = numero(q.get("05. price"))
-    if precio is None or precio <= 0:
-        raise ErrorDatos("PRECIO")
-    try:
-        fecha = date.fromisoformat(q.get("07. latest trading day", ""))
-    except (TypeError, ValueError):
-        raise ErrorDatos("FECHA") from None
     hoy = hoy or datetime.now(timezone.utc).date()
-    edad = (hoy - fecha).days
-    if edad < 0:
-        raise ErrorDatos("FECHA")
+    sesiones = []
+    for fecha_texto, fila in serie.items():
+        try:
+            fecha = date.fromisoformat(fecha_texto)
+        except (TypeError, ValueError):
+            raise ErrorDatos("FECHA") from None
+        if fecha > hoy:
+            raise ErrorDatos("FECHA")
+        if not isinstance(fila, dict):
+            raise ErrorDatos("SERIE")
+        cierre = numero(fila.get("4. close"))
+        if cierre is None or cierre <= 0:
+            raise ErrorDatos("PRECIO")
+        volumen = numero(fila.get("5. volume"))
+        if volumen is not None and (volumen < 0 or not volumen.is_integer()):
+            raise ErrorDatos("SERIE")
+        sesiones.append({"fecha":fecha.isoformat(), "cierre":cierre,
+                         "volumen":int(volumen) if volumen is not None else None})
+    sesiones.sort(key=lambda v: v["fecha"])
+    sesiones = sesiones[-100:]
+    edad = (hoy-date.fromisoformat(sesiones[-1]["fecha"])).days
     if edad > MAX_ANTIGUEDAD_DIAS:
         raise ErrorDatos("ANTIGUO")
-    return {"precio": precio, "cambio_pct": numero(q.get("10. change percent")),
-            "fecha_dato": fecha.isoformat(), "antiguedad_dias": edad}
+    precio = sesiones[-1]["cierre"]
+    cambio = (precio/sesiones[-2]["cierre"]-1)*100 if len(sesiones)>1 else None
+    return {"precio":precio, "cambio_pct":round(cambio,4) if cambio is not None else None,
+            "fecha_dato":sesiones[-1]["fecha"], "antiguedad_dias":edad,
+            "sesiones":sesiones, "volumen":sesiones[-1]["volumen"]}
 
 
 def obtener_ficha(ticker, clave):
-    """Máximo dos consultas; no se generan precios de respaldo en modo real."""
-    ficha = {"ticker": ticker, **dict.fromkeys(CAMPOS), "moneda": None,
-             "fuente": "Alpha Vantage API oficial", "tipo_precio": "cierre diario",
-             "estado_datos": "NO_DISPONIBLES", "advertencias": [], "consultas": []}
+    """Una consulta gratuita como máximo. Sin Premium, reintentos ni precios ficticios."""
+    ficha = {"ticker":ticker, **dict.fromkeys(CAMPOS), "volumen":None,
+             "fuente":"Alpha Vantage API gratuita", "tipo_precio":"cierre diario sin ajustar",
+             "estado_datos":"NO_DISPONIBLES", "advertencias":[], "consultas":[]}
     try:
-        cotizacion = consultar("GLOBAL_QUOTE", ticker, clave)
-        ficha.update(validar_cotizacion(cotizacion, ticker))
-        ficha["consultas"].append({"funcion":"GLOBAL_QUOTE", "estado":"OK"})
+        datos = consultar("TIME_SERIES_DAILY", ticker, clave)
+        ficha.update(validar_serie(datos,ticker))
+        ficha["consultas"].append({"funcion":"TIME_SERIES_DAILY", "outputsize":"compact", "estado":"OK"})
     except ErrorDatos as error:
-        ficha["consultas"].append({"funcion":"GLOBAL_QUOTE", "estado":error.codigo})
+        ficha["consultas"].append({"funcion":"TIME_SERIES_DAILY", "estado":error.codigo})
         ficha["advertencias"].append(str(error))
         return ficha
-    try:
-        overview = consultar("OVERVIEW", ticker, clave)
-        if not overview:
-            raise ErrorDatos("VACIO")
-        if str(overview.get("Symbol", "")).upper() != ticker:
-            raise ErrorDatos("TICKER")
-        ficha["nombre"] = texto(overview.get("Name"))
-        ficha["sector"] = texto(overview.get("Sector"), 80)
-        ficha["moneda"] = texto(overview.get("Currency"), 12)
-        for campo, externo in (("pe_ratio","PERatio"), ("beta","Beta"),
-                                ("max_52s","52WeekHigh"), ("min_52s","52WeekLow")):
-            ficha[campo] = numero(overview.get(externo))
-        # La capitalización lleva sufijo USD: no etiquetar otra moneda como dólares.
-        if ficha["moneda"] == "USD":
-            ficha["cap_mercado_usd"] = numero(overview.get("MarketCapitalization"))
-        if any(ficha[k] is not None and ficha[k] <= 0 for k in ("max_52s", "min_52s")) or (
-            ficha["max_52s"] is not None and ficha["min_52s"] is not None
-            and ficha["max_52s"] < ficha["min_52s"]):
-            ficha["max_52s"] = ficha["min_52s"] = None
-        ficha["consultas"].append({"funcion":"OVERVIEW", "estado":"OK"})
-        ficha["fecha_consulta_fundamentales_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        ficha["periodo_fundamentales"] = texto(overview.get("LatestQuarter"), 20)
-    except ErrorDatos as error:
-        ficha["consultas"].append({"funcion":"OVERVIEW", "estado":error.codigo})
-        ficha["advertencias"].append("Fundamentales: " + str(error))
-    faltantes = [k for k in ("nombre", "sector", "cambio_pct", "pe_ratio", "beta", "max_52s", "min_52s", "moneda")
-                 if ficha[k] is None]
-    ficha["estado_datos"] = "PARCIALES" if faltantes else "COMPLETOS"
-    if faltantes:
-        ficha["advertencias"].append("Datos no disponibles: " + ", ".join(faltantes) + ".")
+    ficha["estado_datos"] = "COMPLETOS" if len(ficha["sesiones"])>=50 else "PARCIALES"
+    if len(ficha["sesiones"])<50:
+        ficha["advertencias"].append("Menos de 50 sesiones: conclusión técnica insuficiente.")
+    if ficha["volumen"] is None:
+        ficha["advertencias"].append("Volumen no disponible; no se usa para decidir.")
     return ficha
