@@ -1,42 +1,20 @@
-# J.A.R.V.I.S.
+# J.A.R.V.I.S. con Alpha Vantage gratuito
+Preparado para **Jorge Valencia**, a partir de la actividad educativa de la Dra. Elda C. Morales. PRUEBA_ELD permanece sin cambios.
 
-Adaptación OpenAI elaborada por **Jorge Valencia**, basada en la actividad educativa de la Dra. Elda C. Morales y en [PRUEBA_ELD](https://github.com/JorgeValba/PRUEBA_ELD), conservado sin cambios.
+Telegram → Batuta → Iris (serie gratuita) → Euler (cálculos y conclusión técnica) → Vera (nota breve).
 
-Telegram → Batuta (orquestador Python) → Iris (API oficial Alpha Vantage) → Euler (cálculos Python e interpretación) → Vera (nota educativa).
+Iris hace una consulta TIME_SERIES_DAILY compact por análisis y obtiene hasta 100 sesiones. Se retiraron OVERVIEW, MCP, P/E, beta, sector, capitalización y rango oficial de 52 semanas porque el proyecto usa la clave gratuita. Python calcula medias20/50, variación de precio20, volatilidad diaria20 y distancia al máximo de cierre20; aplica reglas educativas EVALUAR_ENTRADA, ESPERAR, OBSERVAR, CAUTELA o INFORMACION_INSUFICIENTE. No hay órdenes bursátiles ni rentabilidad probada.
 
-Usa **gpt-5.1**, OpenAI Responses API y el secreto **OPENIA_API_KEY** exactamente con ese nombre. Ejecución automática **lunes 09:00, America/Mexico_City**, y manual desde Actions → mesa-financiera → Run workflow. Para revisar solo Telegram, borra el ticker AAPL precargado.
+GPT-5.1 interpreta y comunica mediante OPENIA_API_KEY. Solo Alpha Vantage usa un plan gratuito: OpenAI conserva su costo de API. Se mantienen ALPHAVANTAGE_API_KEY, TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID. No se necesitan otros secretos. La cuota gratuita no desaparece por esta adaptación.
 
-**Telegram conserva pendientes hasta 24 horas:** la ejecución semanal no recupera toda la semana. Envía la orden cerca del lunes o activa una revisión manual antes de 24 h. Cada revisión atiende como máximo tres actualizaciones; repítela si quedan pendientes. Enviar una orden no activa por sí solo GitHub Actions.
+[Motivo, fórmulas, reglas y validación](docs/VERSION_GRATUITA.md) · [Manual de uso](docs/MANUAL_USO.md) · [Seguridad](docs/SEGURIDAD.md) · [Validación](docs/VALIDACION_ETAPA2.md) · [Análisis del original](docs/ANALISIS_ORIGINAL.md).
 
-## Entregables
+Ejecuta Actions → mesa-financiera → Run workflow: AAPL, simulacion desactivada, para una prueba real. Para atender solo mensajes enviados al bot, vacía el ticker. Único cron financiero: lunes 09:00 America/Mexico_City. Telegram conserva pendientes hasta 24 horas; cada revisión procesa hasta tres actualizaciones. No uses dos lectores con el mismo token.
 
-- [Manual de uso, activación y seguridad](docs/MANUAL_USO.md).
-- [A. Medidas de seguridad implementadas y pendientes](docs/SEGURIDAD.md).
-- [B. Cambios, agentes y limitaciones](docs/CAMBIOS_ETAPA2.md).
-- [Validación de esta versión](docs/VALIDACION_ETAPA2.md).
-- [Análisis exhaustivo del repositorio original](docs/ANALISIS_ORIGINAL.md).
-- [Correspondencia de la migración a OpenAI](docs/MIGRACION_OPENAI.md).
+Para probar sin red con Python 3.12: pip install -r requirements-dev.txt; pytest -q; python analizar.py AAPL --simulacion. El notebook es autónomo y replica las reglas.
 
-Las guías Word originales conservan la autoría y las referencias a Anthropic de la docente. Para esta adaptación usa el manual Markdown actualizado.
+Estados: REAL para el contrato gratuito completo, REAL_PARCIAL si falta historial y SIN_DATOS si la consulta no sirve. Nunca se inventa un precio ante una falla real. Las guías Word originales de la docente y los documentos de etapas anteriores se mantienen como historia; para esta versión prevalece VERSION_GRATUITA.md.
 
-## Prueba local sin API
-
-Con Python 3.12 y un entorno virtual:
-
-```bash
-pip install -r requirements-dev.txt
-pytest -q
-python analizar.py AAPL --simulacion
-```
-
-La simulación usa datos ficticios etiquetados DEMO y guarda evidencia en `salidas/`. Añadir `--telegram` sí envía mensajes, incluso en simulación.
-
-Se conservan terminal, bot continuo, Codespaces y el [notebook autónomo de Colab](https://colab.research.google.com/github/JorgeValba/J.A.R.V.I.S./blob/main/notebook/Mesa_Financiera_Telegram.ipynb). Usa un solo consumidor por token; un bot independiente evita interferir con el original.
-
-**Actualización de datos:** 64 pruebas locales aprobadas. Iris consulta la API oficial directamente y valida fecha y precio. La cotización es de cierre diario, no tiempo real. Los fundamentales pueden requerir Premium. Consulta la [corrección e investigación](docs/CORRECCION_DATOS.md) y los resultados reales en ese documento. No se cambiaron tus secretos.
-
-GPT-5.1 está marcado como obsoleto y su retiro está anunciado para el 1 de abril de 2027; se conserva por solicitud expresa. [Calendario oficial](https://developers.openai.com/api/docs/deprecations).
-
-Estados actuales: REAL, REAL_PARCIAL y SIN_DATOS. Las fallas reales no generan precios DEMO; la demostración se reserva para simulación.
+62 pruebas locales y prueba real con AAPL completadas: 100 sesiones, cierre 2026-10-16, estado REAL y nota aceptada por Telegram. Las reglas no fueron sometidas a backtesting para afirmar rentabilidad. Los precios son de cierre sin ajustar splits/dividendos; las medias y variaciones no representan valoración fundamental.
 
 Nota educativa, no es recomendación de inversión.

@@ -48,7 +48,10 @@ def pipeline(ticker, avisar=print, guardar=True):
     avisar("🧮 Euler · Analista calculando e interpretando…")
     analisis = agente_analista(ficha)
     if config.MODO_CLASE:
-        avisar("📦 Entrega 2→3 · Euler → Vera\n" + "\n".join(analisis["lectura"].values()))
+        ind = analisis["indicadores"]
+        avisar("📦 Entrega 2→3 · Euler → Vera\n"
+               f"SMA20 {mostrar(ind['sma20'])} · SMA50 {mostrar(ind['sma50'])} · variación20 {mostrar(ind['rendimiento20_pct'])} %\n"
+               + "\n".join(analisis["lectura"].values()))
 
     avisar("✍️ Vera · Comunicadora redactando la nota…")
     nota = agente_comunicador(analisis)

@@ -48,7 +48,7 @@ def test_medias_y_rendimiento_calculados():
     ind=agentes.calcular_indicadores(ficha())
     assert ind["sma20"]==189.5 and ind["sma50"]==174.5
     assert ind["rendimiento20_pct"]==round((199/179-1)*100,4)
-    assert ind["caida_max_cierre20_pct"]==0
+    assert ind["distancia_max_cierre20_pct"]==0
     assert ind["decision_tecnica"]=="EVALUAR_ENTRADA"
 
 
@@ -68,7 +68,7 @@ def test_salto_sin_ajustar_impide_concluir():
 
 def test_caida_reciente_activa_cautela():
     ind=agentes.calcular_indicadores(ficha([100]*99+[89]))
-    assert ind["decision_tecnica"]=="CAUTELA" and ind["caida_max_cierre20_pct"]==-11
+    assert ind["decision_tecnica"]=="CAUTELA" and ind["distancia_max_cierre20_pct"]==-11
 
 
 def test_fechas_invertidas_impiden_decidir():

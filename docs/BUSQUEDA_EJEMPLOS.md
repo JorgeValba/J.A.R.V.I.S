@@ -1,3 +1,5 @@
+> Documento histórico de una etapa anterior. Para la implementación vigente con funciones gratuitas, consultar [VERSION_GRATUITA.md](VERSION_GRATUITA.md).
+
 # Búsqueda de ejemplo completo
 Preparado para **Jorge Valencia** · 18 de octubre de 2026.
 
