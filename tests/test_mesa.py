@@ -76,13 +76,13 @@ def test_agentes_reales_encadenan_con_openai_simulado(monkeypatch):
 
     def openai_falso(system, mensaje, usar_mcp=False, max_tokens=900):
         if usar_mcp:
-            return ('{"nombre":"IBM","sector":"Tech","precio":"250.5","cambio_pct":"-0.8%",'
+            return ('{"ticker":"IBM","fecha_dato":"2026-10-16","cap_mercado_usd":null,"nombre":"IBM","sector":"Tech","precio":"250.5","cambio_pct":"-0.8%",'
                     '"pe_ratio":"40.1","beta":"0.7","max_52s":"300","min_52s":"200"}', ["GLOBAL_QUOTE"])
         if "Analista" in system:
             datos = json.loads(mensaje)
             assert datos["indicadores"]["posicion_rango_52s_pct"] == 50.5   # recibió la entrega 1
             return '{"lectura_precio":"a","lectura_riesgo":"b","lectura_valuacion":"c","pregunta_para_investigar":"d"}', []
-        assert '"lectura_precio": "a"' in mensaje                           # recibió la entrega 2
+        assert json.loads(mensaje)["lectura"]["lectura_precio"] == "a"       # recibió la entrega 2
         return "IBM: nota sin descargo", []
 
     monkeypatch.setattr(agentes, "llamar_openai", openai_falso)

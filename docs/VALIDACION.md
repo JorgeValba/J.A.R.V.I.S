@@ -1,3 +1,5 @@
+> Registro histórico de la primera migración. Para la versión actual consulta VALIDACION_ETAPA2.md.
+
 # Validación de J.A.R.V.I.S.
 
 Elaborado por: **Jorge Valencia**  

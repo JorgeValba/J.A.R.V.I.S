@@ -39,8 +39,12 @@ def verificar_bot():
 
 
 def preparar_polling():
-    """Quita un webhook previo; si existe, getUpdates no funciona."""
-    _peticion("GET", _url("deleteWebhook"), timeout=20)
+    """No desactivar otro despliegue: un webhook requiere una decisión manual."""
+    datos = _peticion("GET", _url("getWebhookInfo"), timeout=20).json()
+    if not datos.get("ok"):
+        raise RuntimeError("No se pudo comprobar el webhook de Telegram.")
+    if datos["result"].get("url"):
+        raise RuntimeError("Existe un webhook activo. No se cambió; revisa el manual antes de usar polling.")
 
 
 def obtener_mensajes(offset=None, espera=0):
@@ -60,5 +64,10 @@ def confirmar_leidos(ultimo_update_id):
 
 
 def chat_autorizado(chat_id):
-    """Si TELEGRAM_CHAT_ID está configurado, solo ese chat puede usar el bot."""
-    return not config.TELEGRAM_CHAT_ID or str(chat_id) == config.TELEGRAM_CHAT_ID
+    """Sin TELEGRAM_CHAT_ID se deniega el acceso; solo el chat configurado puede usar el bot."""
+    return bool(config.TELEGRAM_CHAT_ID) and str(chat_id) == config.TELEGRAM_CHAT_ID
+
+
+def exigir_chat_configurado():
+    if not config.TELEGRAM_CHAT_ID:
+        raise RuntimeError("Falta TELEGRAM_CHAT_ID. No se iniciará la atención; consulta el manual.")

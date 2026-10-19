@@ -19,7 +19,7 @@ def instalar_transporte(monkeypatch, handler):
 
 def respuesta(texto="respuesta", estado="completed", calls=None):
     return {"id": "resp_prueba", "object": "response", "created_at": 0,
-            "status": estado, "model": "gpt-6-luna",
+            "status": estado, "model": "gpt-5.1",
             "output": (calls or []) + [{"type": "message", "id": "msg_prueba",
                        "role": "assistant", "status": "completed",
                        "content": [{"type": "output_text", "text": texto, "annotations": []}]}]}
@@ -42,7 +42,8 @@ def test_sdk_serializa_responses_y_lee_texto_y_mcp(monkeypatch):
         body = enviados[0]
         assert body["instructions"] == "instrucciones"
         assert body["input"] == [{"role": "user", "content": "Acción: AAPL"}]
-        assert body["max_output_tokens"] == 900 and body["store"] is False
+        assert body["max_output_tokens"] == 600 and body["store"] is False
+        assert body["model"] == "gpt-5.1"
         assert body["reasoning"] == {"effort": "none"}
         assert body["tools"][0]["server_url"].endswith("valor-ficticio%2F%2B%3F")
         assert body["tools"][0]["require_approval"] == "never"
@@ -100,7 +101,7 @@ def test_notebook_cadena_simulada_sin_red(monkeypatch):
     for i, cell in enumerate(nb["cells"]):
         if cell["cell_type"] == "code" and i != 2:  # instalación exclusiva de Colab
             exec(compile("".join(cell["source"]), f"celda_{i}", "exec"), namespace)
-    nota = namespace["pipeline"]("MSFT", avisar=lambda texto: None)
+    nota = namespace["pipeline"]("MSFT", avisar=lambda texto: None)["entrega_3_nota"]
     assert "MSFT" in nota and "DEMO" in nota and nota.endswith(agentes.DESCARGO)
 
 

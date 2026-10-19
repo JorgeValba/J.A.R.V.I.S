@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 
 from . import config
-from .agentes import agente_analista, agente_comunicador, agente_recolector
+from .agentes import agente_analista, agente_comunicador, agente_recolector, es_demo
 
 PATRON_TICKER = re.compile(r"[A-Z0-9.\-]{1,12}")
 
@@ -32,21 +32,28 @@ def pipeline(ticker, avisar=print, guardar=True):
     avisar(f"🎼 Batuta · Orquestador\nRecibí tu orden. Inicio la cadena para {ticker} (modo {modo}).")
     avisar(f"🛰️ Iris · Recolectora buscando datos de {ticker}…")
     ficha, herramientas = agente_recolector(ticker)
+    if es_demo(ficha) and not config.MODO_SIMULACION:
+        modo = "DEMO"
     if config.MODO_CLASE:
-        avisar("📦 Entrega 1→2 · Iris → Euler (ficha):\n" + json.dumps(ficha, ensure_ascii=False, indent=1)[:1500]
-               + f"\n🔧 Herramientas MCP usadas: {', '.join(herramientas) or 'ninguna'}")
+        avisar("📦 Entrega 1→2 · Iris → Euler\n"
+               f"{ticker} · {ficha.get('nombre')} · {ficha.get('sector')}\n"
+               f"Precio {ficha.get('precio')} USD · cambio {ficha.get('cambio_pct')} %\n"
+               f"Beta {ficha.get('beta')} · P/E {ficha.get('pe_ratio')} · rango {ficha.get('min_52s')}–{ficha.get('max_52s')}\n"
+               f"{ficha['fuente']} · {ficha.get('fecha_dato')}\n"
+               f"MCP: {', '.join(herramientas) or 'ninguna'}")
 
     avisar("🧮 Euler · Analista calculando e interpretando…")
     analisis = agente_analista(ficha)
     if config.MODO_CLASE:
-        avisar("📦 Entrega 2→3 · Euler → Vera (indicadores):\n"
-               + json.dumps(analisis["indicadores"], ensure_ascii=False, indent=1))
+        avisar("📦 Entrega 2→3 · Euler → Vera\n" + "\n".join(analisis["lectura"].values()))
 
     avisar("✍️ Vera · Comunicadora redactando la nota…")
     nota = agente_comunicador(analisis)
 
     resultado = {
         "ticker": ticker,
+        "elaborado_por": "Jorge Valencia",
+        "modo_solicitado": "SIMULACIÓN" if config.MODO_SIMULACION else "REAL",
         "modo": modo,
         "fecha_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "entrega_1_ficha": ficha,

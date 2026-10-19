@@ -28,7 +28,7 @@ Usa siempre estos nombres (Batuta, Iris, Euler, Vera) al explicar el sistema: co
 ## Comandos
 | Para qué | Comando |
 |---|---|
-| Instalar | `pip install -r requirements.txt pytest` |
+| Instalar | `pip install -r requirements-dev.txt` |
 | Pruebas (sin llaves) | `pytest -q` → debe decir `20 passed` o más |
 | Cadena en simulación | `python analizar.py AAPL --simulacion` |
 | Revisar configuración | `python verificar_configuracion.py` (`--mcp` gasta 1 consulta) |
@@ -51,5 +51,8 @@ Cuando te pidan ejecutar o probar la actividad, sigue este orden y reporta cada 
 ## Estructura
 - `mesa/config.py` llaves y modos · `mesa/agentes.py` los 3 agentes · `mesa/pipeline.py` el orquestador
 - `mesa/telegram_io.py` Bot API · `mesa/comandos.py` interpreta `/analiza`
-- `revisar_telegram.py` lo usa GitHub Actions cada 10 minutos (funciona con la computadora apagada)
+- `revisar_telegram.py` lo usa GitHub Actions los lunes a las 09:00 de Ciudad de México o manualmente (funciona con la computadora apagada)
 - `.github/workflows/` automatizaciones · `tests/` pruebas en simulación
+
+## Adaptación vigente — Jorge Valencia
+Modelo gpt-5.1; secreto OPENIA_API_KEY. Respetar S1–S5 en docs/SEGURIDAD.md. Consultar docs/MANUAL_USO.md para retención de Telegram (24 h), activación y límites. No modificar PRUEBA_ELD.

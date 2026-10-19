@@ -16,6 +16,6 @@
     "OPENIA_API_KEY": { "description": "Llave de la API de OpenAI; nombre exacto OPENIA_API_KEY" },
     "ALPHAVANTAGE_API_KEY": { "description": "Llave gratuita de alphavantage.co/support/#api-key" }
   },
-  "postCreateCommand": "pip install --user -r requirements.txt pytest && pytest -q",
+  "postCreateCommand": "pip install --user -r requirements-dev.txt && pytest -q",
   "postAttachCommand": "python verificar_configuracion.py; echo; echo 'Siguiente paso: python analizar.py AAPL --simulacion'"
 }

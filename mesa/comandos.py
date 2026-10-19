@@ -9,7 +9,8 @@ AYUDA = ("🤖 Mesa Financiera de 3 agentes\n"
 
 
 def es_analisis(texto):
-    return (texto or "").strip().lower().startswith("/analiza")
+    partes = (texto or "").strip().split()
+    return bool(partes) and partes[0].lower() == "/analiza"
 
 
 def atender(mensaje):
@@ -26,7 +27,7 @@ def atender(mensaje):
 
     partes = texto.split()
     try:
-        ticker = normalizar_ticker(partes[1] if len(partes) > 1 else "")
+        ticker = normalizar_ticker(partes[1] if len(partes) == 2 else "")
     except ValueError:
         enviar(chat_id, "Escribe un ticker válido. Ejemplo: /analiza MSFT")
         return None

@@ -9,11 +9,12 @@ import requests
 
 from mesa import config
 from mesa.comandos import atender
-from mesa.telegram_io import obtener_mensajes, preparar_polling, verificar_bot
+from mesa.telegram_io import obtener_mensajes, preparar_polling, verificar_bot, exigir_chat_configurado
 
 
 def main():
     print("Configuración:", config.resumen())
+    exigir_chat_configurado()
     print(f"✅ Bot @{verificar_bot()} escuchando. Escríbele /analiza AAPL. Ctrl + C para detener.")
     preparar_polling()
     offset = None

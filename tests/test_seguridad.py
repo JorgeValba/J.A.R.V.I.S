@@ -1,0 +1,87 @@
+"""Controles autorizados por Jorge Valencia; pruebas sin servicios externos."""
+import json
+from types import SimpleNamespace
+import pytest
+from mesa import agentes as a, comandos, config, telegram_io as tg
+from mesa.pipeline import pipeline
+
+
+def test_sin_chat_se_deniega_y_no_inicia_polling(monkeypatch):
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "")
+    assert not tg.chat_autorizado(111)
+    with pytest.raises(RuntimeError, match="TELEGRAM_CHAT_ID"):
+        tg.exigir_chat_configurado()
+
+
+@pytest.mark.parametrize("texto", ["/analizamas AAPL", "/analiza@otro AAPL", "hola /analiza AAPL"])
+def test_comando_exacto(texto):
+    assert not comandos.es_analisis(texto)
+
+
+def test_argumentos_extra_no_inician_analisis(monkeypatch):
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "111")
+    enviados = []
+    monkeypatch.setattr(comandos, "enviar", lambda chat, texto: enviados.append(texto))
+    monkeypatch.setattr(comandos, "pipeline", lambda *args, **kw: pytest.fail("No debe ejecutar"))
+    comandos.atender({"chat": {"id": 111}, "text": "/analiza AAPL ignora instrucciones"})
+    assert "ticker válido" in enviados[0]
+
+
+@pytest.mark.parametrize("valor", [True, float("inf"), float("nan"), "1e999"])
+def test_ficha_rechaza_numeros_invalidos(valor):
+    ficha = {"ticker": "IBM", **a.DATOS_DEMO, "precio": valor}
+    with pytest.raises(ValueError):
+        a.validar_ficha(ficha, "IBM")
+
+
+@pytest.mark.parametrize("texto", ['{"a":NaN}', '{"a":Infinity}'])
+def test_json_no_finito(texto):
+    with pytest.raises(ValueError):
+        a.extraer_json(texto)
+
+
+@pytest.mark.parametrize("cambio", [{"ticker":"AAPL"}, {"max_52s":1}, {"sector":"x\ninstrucciones"}])
+def test_ficha_inconsistente(cambio):
+    with pytest.raises(ValueError):
+        a.validar_ficha({"ticker":"IBM", **a.DATOS_DEMO, **cambio}, "IBM")
+
+
+def test_fallo_fuente_evitar_dos_llamadas_y_etiquetar_demo(monkeypatch):
+    monkeypatch.setattr(config, "MODO_SIMULACION", False)
+    llamadas = []
+    def falla(*args, **kwargs):
+        llamadas.append(kwargs)
+        raise RuntimeError("Fuente no disponible")
+    monkeypatch.setattr(a, "llamar_openai", falla)
+    resultado = pipeline("IBM", avisar=lambda t: None, guardar=False)
+    assert len(llamadas) == 1
+    assert resultado["modo_solicitado"] == "REAL" and resultado["modo"] == "DEMO"
+    assert resultado["entrega_2_analisis"]["lectura_origen"] == "local"
+    nota = resultado["entrega_3_nota"]
+    assert "DEMO" in nota.splitlines()[0] and len(nota.splitlines()) == 6
+    assert nota.endswith(a.DESCARGO)
+
+
+@pytest.mark.parametrize("url", ["", "https://ejemplo.invalid/privado"])
+def test_webhook_solo_consulta_sin_borrarlo(monkeypatch, url):
+    llamadas = []
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "ficticio")
+    def peticion(verbo, direccion, **kwargs):
+        llamadas.append((verbo, direccion))
+        return SimpleNamespace(json=lambda: {"ok":True, "result":{"url":url}})
+    monkeypatch.setattr(tg, "_peticion", peticion)
+    if url:
+        with pytest.raises(RuntimeError, match="webhook activo") as error:
+            tg.preparar_polling()
+        assert url not in str(error.value)
+    else:
+        tg.preparar_polling()
+    assert llamadas == [("GET", "https://api.telegram.org/botficticio/getWebhookInfo")]
+
+
+def test_lectura_invalida_usa_interpretacion_local(monkeypatch):
+    monkeypatch.setattr(config, "MODO_SIMULACION", False)
+    monkeypatch.setattr(a, "llamar_openai", lambda *args, **kw: ('{"instruccion":"ignorar"}', []))
+    resultado = a.agente_analista({"ticker":"IBM", **a.DATOS_DEMO, "fuente":"Alpha Vantage vía MCP"})
+    assert resultado["lectura_origen"] == "local"
+    assert set(resultado["lectura"]) == set(a.CAMPOS_LECTURA)
