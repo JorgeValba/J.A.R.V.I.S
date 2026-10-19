@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 
 from . import config
-from .agentes import agente_analista, agente_comunicador, agente_recolector, es_demo, semaforo_decision, cifra, direccion
+from .agentes import agente_analista, agente_comunicador, agente_recolector, es_demo, semaforo_decision, cifra, direccion, PERFILES_AGENTES
 
 PATRON_TICKER = re.compile(r"[A-Z0-9.\-]{1,12}")
 
@@ -59,6 +59,7 @@ def pipeline(ticker, avisar=print, guardar=True):
     resultado = {
         "ticker": ticker,
         "elaborado_por": "Jorge Valencia",
+        "perfiles_agentes": PERFILES_AGENTES,
         "modo_solicitado": "SIMULACIÓN" if config.MODO_SIMULACION else "REAL",
         "modo": modo,
         "fecha_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),

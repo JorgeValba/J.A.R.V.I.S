@@ -59,3 +59,7 @@ mesa/datos.py, mesa/agentes.py, mesa/pipeline.py, buscar_ejemplo.py, verificar_c
 ## Presentación visual de Telegram
 
 Actualización solicitada por Jorge Valencia: datos en viñetas con emojis, tanto en entregas intermedias como en la nota. Semáforo determinista: 🟢 EVALUAR_ENTRADA; 🟡 OBSERVAR; 🔴 ESPERAR o CAUTELA; ⚪ INFORMACION_INSUFICIENTE. Los colores representan la señal educativa existente, no rentabilidad ni riesgo total. No cambian fórmulas ni reglas. Cierre, cambio diario, medias, variación20, volatilidad20, distancia al máximo y motivo se muestran por código con dos decimales. Las alertas se conservan. Se permiten más líneas para separar los datos en viñetas; la explicación de IA sigue siendo breve. Sin consultas adicionales ni nuevos indicadores.
+
+## Personalidades explícitas en código
+
+A solicitud de Jorge Valencia, mesa/agentes.py declara PERSONALIDAD_IRIS (curiosa y meticulosa), PERSONALIDAD_EULER (auditor escéptico, prudente y preciso) y PERSONALIDAD_VERA (comunicadora ejecutiva, serena y directa). Los prompts de Euler y Vera incluyen sus personalidades. PROMPT_RECOLECTOR documenta las instrucciones y personalidad de Iris, que continúa ejecutándose de forma determinista con la API gratuita, sin agregar una llamada de IA ni restaurar MCP o Premium. PERFILES_AGENTES registra los tres perfiles en cada evidencia JSON para que sean verificables. El notebook incluye las mismas definiciones. Semáforo, viñetas y reglas financieras se conservan.
