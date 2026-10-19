@@ -24,3 +24,28 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pytest -q
       - run: python analizar.py AAPL --simulacion
+
+  buscar-ejemplo:
+    if: contains(github.event.head_commit.message, '[buscar-ejemplo]')
+    needs: pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: mesa-financiera
+      cancel-in-progress: false
+    env:
+      ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Buscar ejemplo completo con máximo seis símbolos
+        run: python buscar_ejemplo.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: busqueda-ejemplos-Jorge-Valencia
+          path: salidas/
+          retention-days: 14
