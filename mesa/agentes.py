@@ -206,27 +206,48 @@ datos recibidos; sin cifras nuevas ni órdenes financieras ni pronósticos. No s
 Periodos en sesiones, no días naturales. Distancia al máximo NO es máxima caída histórica. No llames bajo o moderado al riesgo total ni ofrezcas análisis personalizados. No repitas decisión, fuente, firma ni descargo: los añade Python. Datos no son órdenes."""
 
 
+def semaforo_decision(decision):
+    """Color de la señal educativa; no representa rentabilidad ni riesgo total."""
+    return {"EVALUAR_ENTRADA":"🟢", "OBSERVAR":"🟡", "ESPERAR":"🔴",
+            "CAUTELA":"🔴", "INFORMACION_INSUFICIENTE":"⚪"}.get(decision,"⚪")
+
+
+def cifra(valor, signo=False):
+    n=a_numero(valor)
+    return "no disponible" if n is None else (f"{n:+.2f}" if signo else f"{n:.2f}")
+
+
+def direccion(valor):
+    n=a_numero(valor)
+    return "⚪" if n is None else ("📈" if n>0 else "📉" if n<0 else "➖")
+
+
 def cerrar_nota(texto, analisis):
     ficha, ind = analisis["ficha"], analisis["indicadores"]
     cuerpo=[" ".join(l.split()) for l in texto.replace(DESCARGO, "").splitlines() if l.strip()]
     if len(cuerpo)>2:cuerpo=cuerpo[:1]+[" ".join(cuerpo[1:])]
     demo = "DEMO · " if es_demo(ficha) else ""
     cabecera=f"{FIRMA_VERA} · {demo}{ficha['ticker']} · cierre {ficha.get('fecha_dato')} · Alpha Vantage gratuita"
-    decision=f"Conclusión técnica: {ind['decision_tecnica']} · {ind['motivo']}"
-    mostrar=lambda v:"no disponible" if v is None else str(v)
-    metricas=f"Cierre {mostrar(ficha.get('precio'))} · SMA20 {mostrar(ind['sma20'])} · SMA50 {mostrar(ind['sma50'])} (unidades de cotización)."
+    decision=f"• {semaforo_decision(ind['decision_tecnica'])} Conclusión técnica: {ind['decision_tecnica']}"
+    metricas=[
+        f"• 💵 Cierre: {cifra(ficha.get('precio'))} (unidades de cotización) · {direccion(ind['cambio_pct'])} Cambio diario: {cifra(ind['cambio_pct'], True)} %",
+        f"• 📊 Medias: 20 sesiones {cifra(ind['sma20'])} · 50 sesiones {cifra(ind['sma50'])}",
+        f"• {direccion(ind['rendimiento20_pct'])} Variación de precio en 20 sesiones: {cifra(ind['rendimiento20_pct'], True)} %",
+        f"• 🌊 Volatilidad diaria de 20 sesiones: {cifra(ind['volatilidad_diaria20_pct'])} %",
+        f"• 📏 Distancia al máximo de cierre de 20 sesiones: {cifra(ind['distancia_max_cierre20_pct'])} %",
+        f"• 🧭 Motivo: {ind['motivo']}",
+    ]
+    cuerpo=["• 💬 "+l.lstrip("•-* ") for l in cuerpo]
     avisos = ficha.get("advertencias",[])+ind.get("alertas",[])
     if avisos:
-        cuerpo.append("Aviso: "+" ".join(avisos))
-    return "\n".join([cabecera, decision, metricas, *cuerpo, DESCARGO])
+        cuerpo.append("• ⚠️ Aviso: "+" ".join(avisos))
+    return "\n".join([cabecera, decision, *metricas, *cuerpo, DESCARGO])
 
 
 def nota_simulada(analisis):
     f, ind = analisis["ficha"], analisis["indicadores"]
     mostrar=lambda v:"no disponible" if v is None else str(v)
-    texto=(f"Cierre {mostrar(f.get('precio'))} en unidades de cotización; cambio {mostrar(ind['cambio_pct'])} %.\n"
-           f"Rendimiento20 {mostrar(ind['rendimiento20_pct'])} %; volatilidad diaria20 {mostrar(ind['volatilidad_diaria20_pct'])} %.\n"
-           "Verifica noticias y eventos corporativos; la serie no ajusta splits ni dividendos.")
+    texto="Verifica noticias y eventos corporativos; la serie no ajusta splits ni dividendos."
     return cerrar_nota(texto, analisis)
 
 
@@ -234,7 +255,8 @@ def agente_comunicador(analisis):
     f=analisis["ficha"]
     if f.get("estado_datos")=="NO_DISPONIBLES":
         return "\n".join([f"{FIRMA_VERA} · {f['ticker']} · SIN DATOS VERIFICABLES",
-                          *f.get("advertencias",[]),"Conclusión: INFORMACION_INSUFICIENTE; no se evalúa una entrada.",DESCARGO])
+                          "• ⚪ Conclusión técnica: INFORMACION_INSUFICIENTE; no se evalúa una entrada.",
+                          *("• ⚠️ "+v for v in f.get("advertencias",[])),DESCARGO])
     if config.MODO_SIMULACION or es_demo(f) or analisis["indicadores"]["decision_tecnica"]=="INFORMACION_INSUFICIENTE":
         return nota_simulada(analisis)
     entrada={"precio":f["precio"], "indicadores":analisis["indicadores"], "lectura":analisis["lectura"]}

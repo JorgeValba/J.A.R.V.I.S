@@ -55,3 +55,7 @@ El trabajo temporal de validación real se retira al terminar. Permanece el úni
 ## Archivos de esta adaptación
 
 mesa/datos.py, mesa/agentes.py, mesa/pipeline.py, buscar_ejemplo.py, verificar_configuracion.py, notebook, `.mcp.json`, comando de desarrollo, pruebas y documentación. Se reemplazan pruebas de indicadores Premium por pruebas de la serie y las reglas gratuitas. No se cambia la dependencia ni el nombre OPENIA_API_KEY.
+
+## Presentación visual de Telegram
+
+Actualización solicitada por Jorge Valencia: datos en viñetas con emojis, tanto en entregas intermedias como en la nota. Semáforo determinista: 🟢 EVALUAR_ENTRADA; 🟡 OBSERVAR; 🔴 ESPERAR o CAUTELA; ⚪ INFORMACION_INSUFICIENTE. Los colores representan la señal educativa existente, no rentabilidad ni riesgo total. No cambian fórmulas ni reglas. Cierre, cambio diario, medias, variación20, volatilidad20, distancia al máximo y motivo se muestran por código con dos decimales. Las alertas se conservan. Se permiten más líneas para separar los datos en viñetas; la explicación de IA sigue siendo breve. Sin consultas adicionales ni nuevos indicadores.

@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 
 from . import config
-from .agentes import agente_analista, agente_comunicador, agente_recolector, es_demo
+from .agentes import agente_analista, agente_comunicador, agente_recolector, es_demo, semaforo_decision, cifra, direccion
 
 PATRON_TICKER = re.compile(r"[A-Z0-9.\-]{1,12}")
 
@@ -40,18 +40,18 @@ def pipeline(ticker, avisar=print, guardar=True):
     mostrar = lambda valor: "no disponible" if valor is None else str(valor)
     if config.MODO_CLASE:
         avisar("📦 Entrega 1→2 · Iris → Euler\n"
-               f"{ticker} · precio {mostrar(ficha.get('precio'))} · cambio {mostrar(ficha.get('cambio_pct'))} %\n"
-               f"Cierre {mostrar(ficha.get('fecha_dato'))} · {len(ficha.get('sesiones') or [])} sesiones disponibles\n"
-               f"{ficha['fuente']} · serie diaria sin ajustar · {estado}\n"
-               + (" ".join(ficha.get('advertencias',[])) or "Datos gratuitos validados."))
+               f"• 💵 {ticker} · precio {cifra(ficha.get('precio'))} · {direccion(ficha.get('cambio_pct'))} cambio {cifra(ficha.get('cambio_pct'), True)} %\n"
+               f"• 📅 Cierre {mostrar(ficha.get('fecha_dato'))} · 📚 {len(ficha.get('sesiones') or [])} sesiones disponibles\n"
+               f"• 🔎 {ficha['fuente']} · serie diaria sin ajustar · {estado}\n"
+               + ("• ⚠️ "+" ".join(ficha['advertencias']) if ficha.get('advertencias') else "• ✅ Datos gratuitos validados."))
 
     avisar("🧮 Euler · Analista calculando e interpretando…")
     analisis = agente_analista(ficha)
     if config.MODO_CLASE:
         ind = analisis["indicadores"]
         avisar("📦 Entrega 2→3 · Euler → Vera\n"
-               f"SMA20 {mostrar(ind['sma20'])} · SMA50 {mostrar(ind['sma50'])} · variación20 {mostrar(ind['rendimiento20_pct'])} %\n"
-               + "\n".join(analisis["lectura"].values()))
+               f"• {semaforo_decision(ind['decision_tecnica'])} {ind['decision_tecnica']} · SMA20 {cifra(ind['sma20'])} · SMA50 {cifra(ind['sma50'])}\n"
+               + "\n".join("• "+icono+" "+texto for icono,texto in zip(("📈","🌊","🧭","🔎"),analisis["lectura"].values())))
 
     avisar("✍️ Vera · Comunicadora redactando la nota…")
     nota = agente_comunicador(analisis)
