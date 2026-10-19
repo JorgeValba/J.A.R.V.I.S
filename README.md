@@ -2,7 +2,7 @@
 
 Adaptación OpenAI elaborada por **Jorge Valencia**, basada en la actividad educativa de la Dra. Elda C. Morales y en [PRUEBA_ELD](https://github.com/JorgeValba/PRUEBA_ELD), conservado sin cambios.
 
-Telegram → Batuta (orquestador Python) → Iris (datos Alpha Vantage MCP) → Euler (cálculos Python e interpretación) → Vera (nota educativa).
+Telegram → Batuta (orquestador Python) → Iris (API oficial Alpha Vantage) → Euler (cálculos Python e interpretación) → Vera (nota educativa).
 
 Usa **gpt-5.1**, OpenAI Responses API y el secreto **OPENIA_API_KEY** exactamente con ese nombre. Ejecución automática **lunes 09:00, America/Mexico_City**, y manual desde Actions → mesa-financiera → Run workflow. Para revisar solo Telegram, borra el ticker AAPL precargado.
 
@@ -33,8 +33,10 @@ La simulación usa datos ficticios etiquetados DEMO y guarda evidencia en `salid
 
 Se conservan terminal, bot continuo, Codespaces y el [notebook autónomo de Colab](https://colab.research.google.com/github/JorgeValba/J.A.R.V.I.S./blob/main/notebook/Mesa_Financiera_Telegram.ipynb). Usa un solo consumidor por token; un bot independiente evita interferir con el original.
 
-**Estado:** 48 pruebas locales aprobadas sin servicios externos. La prueba real integrada requiere configurar los cuatro secretos en este repositorio. No se extrajeron ni copiaron secretos del original.
+**Actualización de datos:** 64 pruebas locales aprobadas. Iris consulta la API oficial directamente y valida fecha y precio. La cotización es de cierre diario, no tiempo real. Los fundamentales pueden requerir Premium. Consulta la [corrección e investigación](docs/CORRECCION_DATOS.md) y los resultados reales en ese documento. No se cambiaron tus secretos.
 
 GPT-5.1 está marcado como obsoleto y su retiro está anunciado para el 1 de abril de 2027; se conserva por solicitud expresa. [Calendario oficial](https://developers.openai.com/api/docs/deprecations).
+
+Estados actuales: REAL, REAL_PARCIAL y SIN_DATOS. Las fallas reales no generan precios DEMO; la demostración se reserva para simulación.
 
 Nota educativa, no es recomendación de inversión.

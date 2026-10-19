@@ -40,7 +40,7 @@ def main():
             if mensaje:
                 resultado = atender(mensaje)
                 if resultado:
-                    print(f"✅ {resultado['ticker']} atendido · evidencia: {resultado['archivo']}")
+                    print(f"{resultado['ticker']} · estado {resultado['modo']} · evidencia: {resultado['archivo']}")
         except Exception as error:                           # un error no detiene a los demás
             print(f"⚠️ Error con el mensaje {actualizacion['update_id']}: {type(error).__name__}")
         finally:

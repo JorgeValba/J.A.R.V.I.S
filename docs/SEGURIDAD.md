@@ -1,3 +1,5 @@
+> Actualización posterior: consulta [Corrección de datos](CORRECCION_DATOS.md). La ruta vigente usa la API oficial directa; REAL_PARCIAL identifica datos faltantes y SIN_DATOS rechaza cotizaciones inválidas. El respaldo DEMO descrito abajo quedó limitado a simulación. Este documento registra la etapa anterior donde difiere de esa actualización.
+
 # A. Seguridad de J.A.R.V.I.S.
 Preparado para: **Jorge Valencia** · 18 de octubre de 2026.
 

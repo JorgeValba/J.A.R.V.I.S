@@ -5,7 +5,7 @@ un ecosistema de **3 agentes financieros** que se pasan el trabajo en cadena y s
 
 ```
 Telegram /analiza AAPL ─► Batuta · Orquestador (mesa/pipeline.py)
-   ├─ Iris  · Recolectora  (Agente 1: OpenAI + MCP de Alpha Vantage) ─► ficha JSON
+   ├─ Iris  · Recolectora  (Agente 1: API oficial Alpha Vantage) ─► ficha JSON
    ├─ Euler · Analista     (Agente 2: Python calcula, OpenAI interpreta) ─► análisis JSON
    └─ Vera  · Comunicadora (Agente 3: OpenAI redacta) ─► nota final en Telegram
 ```
@@ -45,7 +45,7 @@ Cuando te pidan ejecutar o probar la actividad, sigue este orden y reporta cada 
 1. Instala dependencias y corre `pytest -q`.
 2. Corre `python analizar.py AAPL --simulacion` y muestra las entregas 1→2 y 2→3.
 3. Corre `python verificar_configuracion.py`. Si hay llaves, pregunta si desea el modo real.
-4. En modo real, corre `python analizar.py <TICKER>` y confirma que la fuente diga "Alpha Vantage vía MCP".
+4. En modo real, corre `python analizar.py <TICKER>` y confirma que la modo sea REAL o REAL_PARCIAL y el cierre sea reciente.
 5. Indica dónde quedó la evidencia (`salidas/*.json`) y qué capturas tomar para la rúbrica.
 
 ## Estructura
@@ -56,3 +56,6 @@ Cuando te pidan ejecutar o probar la actividad, sigue este orden y reporta cada 
 
 ## Adaptación vigente — Jorge Valencia
 Modelo gpt-5.1; secreto OPENIA_API_KEY. Respetar S1–S5 en docs/SEGURIDAD.md. Consultar docs/MANUAL_USO.md para retención de Telegram (24 h), activación y límites. No modificar PRUEBA_ELD.
+
+## Corrección de datos vigente
+Iris usa mesa/datos.py con GLOBAL_QUOTE y OVERVIEW; no depende de IA para leer cifras. No emitir datos ficticios ante fallas reales. Consultar docs/CORRECCION_DATOS.md. Mantener las claves y los errores del proveedor fuera de logs crudos.

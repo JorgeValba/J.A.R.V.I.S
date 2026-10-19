@@ -1,10 +1,10 @@
-# Validación de la segunda etapa
-Preparado para: **Jorge Valencia** · 18 de octubre de 2026.
+# Validación vigente de JARVIS
+Preparado para **Jorge Valencia** · 18 de octubre de 2026.
 
-Resultado local: **48 passed in 6.20s**, con Python del entorno aislado y dependencias fijadas. Se ejecutó `python -m pytest -q` con directorio temporal propio. Sin API reales ni mensajes a Telegram.
+- 64 pruebas locales aprobadas y 64 pruebas aprobadas en GitHub. Dependencias sin conflictos comprobados en el entorno de trabajo.
+- Regresión de fecha 2024, fechas futuras, fin de semana, valores inválidos, cuota y plan en respuestas HTTP 200, errores sin credenciales, datos parciales, fallos OpenAI, Telegram y notebook cubiertos sin red en pruebas unitarias.
+- Prueba integrada real de AAPL realizada una vez con los secretos existentes: cierre 2026-10-16, datos de precio presentes, fundamentales bloqueados por aviso de cuota, estado REAL_PARCIAL. OpenAI y envío Telegram completados. No se confirma entrega visual en el dispositivo, sino aceptación de los mensajes por la API de Telegram.
+- [Prueba real y logs](https://github.com/JorgeValba/J.A.R.V.I.S./actions/runs/39183844888/job/117842109206).
+- [Investigación y alcance de la corrección](CORRECCION_DATOS.md).
 
-Se comprobaron: fórmulas y datos ausentes, cadena de tres agentes, llamadas Responses/MCP serializadas por el SDK real con transporte HTTP simulado, errores sanitizados, autorización, lote de tres actualizaciones, notebook autónomo, comando exacto, argumentos extras, números no finitos, ticker/rango incoherentes, respaldo DEMO con una sola llamada fallida, lectura inválida y webhook respetado.
-
-La revisión de archivos detectó un solo cron financiero y otro workflow de pruebas en simulación. Se fijaron dependencias y tres Actions a SHA. Las fórmulas de calcular_indicadores se conservan; las validaciones se aplican antes del cálculo. Los secretos no se recuperaron, imprimieron ni trasladaron.
-
-Pendiente: prueba real de OpenAI + Alpha Vantage + Telegram con secretos del nuevo repositorio, disponibilidad del modelo y cuotas. Las pruebas locales no verifican la puntualidad del scheduler, calidad de una respuesta real, facturación ni exactitud de las cotizaciones. Consultar Actions para el resultado de CI del commit publicado.
+Pendiente externo: obtener fundamentales completos cuando haya cuota y acceso a OVERVIEW. No se verificaron contra una segunda fuente las cifras devueltas por Alpha Vantage. No se promete disponibilidad permanente ni ejecución exactamente una vez.
