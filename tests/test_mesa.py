@@ -60,14 +60,11 @@ def test_cadena_completa_output_es_input():
         assert json.load(f)["ticker"] == "MSFT"
 
 
-def test_mcp_caido_usa_respaldo_demo(monkeypatch):
+def test_fuente_caida_no_inventa_precios(monkeypatch):
     monkeypatch.setattr(config, "MODO_SIMULACION", False)
-
-    def falla(*args, **kwargs):
-        raise ConnectionError("sin red")
-    monkeypatch.setattr(agentes, "llamar_openai", falla)
+    monkeypatch.setattr(agentes, "obtener_ficha", lambda *args: {"ticker":"AAPL", "precio":None, "estado_datos":"NO_DISPONIBLES"})
     ficha, herramientas = agentes.agente_recolector("AAPL")
-    assert "DEMO" in ficha["fuente"] and herramientas == []
+    assert ficha["precio"] is None and herramientas == []
 
 
 def test_agentes_reales_encadenan_con_openai_simulado(monkeypatch):
@@ -85,10 +82,15 @@ def test_agentes_reales_encadenan_con_openai_simulado(monkeypatch):
         assert json.loads(mensaje)["lectura"]["lectura_precio"] == "a"       # recibió la entrega 2
         return "IBM: nota sin descargo", []
 
+    monkeypatch.setattr(agentes, "obtener_ficha", lambda *args: {
+        "ticker":"IBM", "nombre":"IBM", "sector":"Tech", "precio":250.5,
+        "cambio_pct":-0.8,"fecha_dato":"2026-10-16","pe_ratio":40.1,"beta":0.7,
+        "max_52s":300,"min_52s":200,"cap_mercado_usd":None,"moneda":"USD",
+        "fuente":"Alpha Vantage API oficial","estado_datos":"COMPLETOS","consultas":[]})
     monkeypatch.setattr(agentes, "llamar_openai", openai_falso)
     r = pl.pipeline("IBM", avisar=lambda t: None)
-    assert r["herramientas_mcp"] == ["GLOBAL_QUOTE"]
-    assert r["entrega_1_ficha"]["fuente"] == "Alpha Vantage vía MCP"
+    assert r["herramientas_mcp"] == []
+    assert r["entrega_1_ficha"]["fuente"] == "Alpha Vantage API oficial"
     assert r["entrega_3_nota"].endswith(agentes.DESCARGO)                   # el descargo se garantiza
 
 

@@ -44,6 +44,9 @@ def main():
         from mesa.telegram_io import enviar
         enviar(config.TELEGRAM_CHAT_ID, resultado["entrega_3_nota"])
     print(f"\n💾 Evidencia guardada en: {resultado['archivo']}")
+    print("Estado de datos:", resultado["modo"])
+    if resultado["modo"] == "SIN_DATOS":
+        sys.exit(2)
 
 
 if __name__ == "__main__":

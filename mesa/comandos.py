@@ -4,7 +4,7 @@ from .telegram_io import chat_autorizado, enviar
 
 AYUDA = ("🤖 Mesa Financiera de 3 agentes\n"
          "/analiza TICKER → ejemplo: /analiza AAPL\n"
-         "Batuta dirige: Iris (datos por MCP) → Euler (análisis) → Vera (nota)\n"
+         "Batuta dirige: Iris (API oficial Alpha Vantage) → Euler (análisis) → Vera (nota)\n"
          "Límite gratuito de Alpha Vantage: 25 consultas al día.")
 
 

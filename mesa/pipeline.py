@@ -34,13 +34,17 @@ def pipeline(ticker, avisar=print, guardar=True):
     ficha, herramientas = agente_recolector(ticker)
     if es_demo(ficha) and not config.MODO_SIMULACION:
         modo = "DEMO"
+    estado = ficha.get("estado_datos", "COMPLETOS")
+    if not config.MODO_SIMULACION and estado in ("PARCIALES", "NO_DISPONIBLES"):
+        modo = "REAL_PARCIAL" if estado == "PARCIALES" else "SIN_DATOS"
+    mostrar = lambda valor: "no disponible" if valor is None else str(valor)
     if config.MODO_CLASE:
         avisar("📦 Entrega 1→2 · Iris → Euler\n"
-               f"{ticker} · {ficha.get('nombre')} · {ficha.get('sector')}\n"
-               f"Precio {ficha.get('precio')} USD · cambio {ficha.get('cambio_pct')} %\n"
-               f"Beta {ficha.get('beta')} · P/E {ficha.get('pe_ratio')} · rango {ficha.get('min_52s')}–{ficha.get('max_52s')}\n"
-               f"{ficha['fuente']} · {ficha.get('fecha_dato')}\n"
-               f"MCP: {', '.join(herramientas) or 'ninguna'}")
+               f"{ticker} · {mostrar(ficha.get('nombre'))} · {mostrar(ficha.get('sector'))}\n"
+               f"Precio {mostrar(ficha.get('precio'))} {ficha.get('moneda') or '(moneda no confirmada)'} · cambio {mostrar(ficha.get('cambio_pct'))} %\n"
+               f"Beta {mostrar(ficha.get('beta'))} · P/E {mostrar(ficha.get('pe_ratio'))} · rango {mostrar(ficha.get('min_52s'))}–{mostrar(ficha.get('max_52s'))}\n"
+               f"{ficha['fuente']} · cierre {mostrar(ficha.get('fecha_dato'))} · {estado}\n"
+               + (" ".join(ficha.get('advertencias', [])) or "Fuente consultada y fecha validada."))
 
     avisar("🧮 Euler · Analista calculando e interpretando…")
     analisis = agente_analista(ficha)
@@ -58,6 +62,7 @@ def pipeline(ticker, avisar=print, guardar=True):
         "fecha_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "entrega_1_ficha": ficha,
         "herramientas_mcp": herramientas,
+        "consultas_datos": ficha.get("consultas", []),
         "entrega_2_analisis": analisis,
         "entrega_3_nota": nota,
     }

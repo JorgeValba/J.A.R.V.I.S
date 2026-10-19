@@ -46,20 +46,6 @@ def test_ficha_inconsistente(cambio):
         a.validar_ficha({"ticker":"IBM", **a.DATOS_DEMO, **cambio}, "IBM")
 
 
-def test_fallo_fuente_evitar_dos_llamadas_y_etiquetar_demo(monkeypatch):
-    monkeypatch.setattr(config, "MODO_SIMULACION", False)
-    llamadas = []
-    def falla(*args, **kwargs):
-        llamadas.append(kwargs)
-        raise RuntimeError("Fuente no disponible")
-    monkeypatch.setattr(a, "llamar_openai", falla)
-    resultado = pipeline("IBM", avisar=lambda t: None, guardar=False)
-    assert len(llamadas) == 1
-    assert resultado["modo_solicitado"] == "REAL" and resultado["modo"] == "DEMO"
-    assert resultado["entrega_2_analisis"]["lectura_origen"] == "local"
-    nota = resultado["entrega_3_nota"]
-    assert "DEMO" in nota.splitlines()[0] and len(nota.splitlines()) == 6
-    assert nota.endswith(a.DESCARGO)
 
 
 @pytest.mark.parametrize("url", ["", "https://ejemplo.invalid/privado"])

@@ -1,7 +1,7 @@
 """Revisa que todo esté listo, sin mostrar el valor de ninguna llave.
 
   python verificar_configuracion.py           → revisa llaves y el token de Telegram
-  python verificar_configuracion.py --mcp     → además prueba el MCP de Alpha Vantage (gasta 1 consulta)
+  python verificar_configuracion.py --mcp     → además prueba el MCP de Alpha Vantage (gasta hasta 2 consultas)
 """
 import sys
 
@@ -22,17 +22,17 @@ def main():
             errores += 1
             print(f"  Telegram                ❌ {type(error).__name__}; revisa configuración y conexión")
 
-    if "--mcp" in sys.argv:
+    if "--mcp" in sys.argv or "--datos" in sys.argv:
         if config.MODO_SIMULACION:
-            print("  MCP Alpha Vantage       ⬜ omitido: faltan OPENIA_API_KEY o ALPHAVANTAGE_API_KEY")
+            print("  API Alpha Vantage       ⬜ omitido: faltan OPENIA_API_KEY o ALPHAVANTAGE_API_KEY")
         else:
             from mesa.agentes import agente_recolector
             ficha, herramientas = agente_recolector("IBM")
-            if ficha["fuente"].startswith("Alpha Vantage"):
-                print(f"  MCP Alpha Vantage       ✅ respondió (herramientas: {', '.join(herramientas) or 'n/d'})")
+            if ficha.get("estado_datos") in ("COMPLETOS", "PARCIALES"):
+                print(f"  API Alpha Vantage       ✅ respondió (herramientas: {', '.join(x['funcion'] + ':' + x['estado'] for x in ficha.get('consultas', []))})")
             else:
                 errores += 1
-                print(f"  MCP Alpha Vantage       ❌ {ficha['fuente']}")
+                print(f"  API Alpha Vantage       ❌ {' '.join(ficha.get('advertencias', []))}")
 
     if config.MODO_SIMULACION:
         print("\nℹ️  Estás en MODO SIMULACIÓN: todo funciona, pero con datos ficticios.")
